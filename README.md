@@ -6,9 +6,8 @@
 
 安装ADB（平台工具） https://developer.android.com/studio/releases/platform-tools 安装 Python 依赖 PIP install -r requirements.txt `
 
-快速入门 Windows（双击） 档案 它的作用 setup.bat 一键安装（pip + adb 检查） start.bat 启动网页控制面板 手动 '灰烬
-
-网页界面（推荐） 蟒蛇 server.py
+快速入门 Windows（双击） 档案 它的作用 setup.bat 一键安装（pip + adb 检查） start.bat 启动网页控制面板 
+网页界面（推荐）  server.py
 
 开放 http://127.0.0.1:8765 CLI Python main.py——现在
 
