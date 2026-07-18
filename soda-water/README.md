@@ -2,7 +2,7 @@
 通过 ADB + OpenCV 模板匹配，自动检测并点选 Qishui Music（汽水音乐）安卓应用中的广告。
 
 博客
-详细原理与使用教程：CSDN 博客
+详细原理与使用教程：CSDN 博客https://blog.csdn.net/l_14yhl9t/article/details/162992286?spm=1001.2014.3001.5501
 
 工作原理
 ADB捕捉电话屏幕
@@ -25,11 +25,9 @@ Windows（双击）
 档案	它的作用
 setup.bat	一键安装（pip + adb 检查）
 start.bat	启动网页控制面板
-手动
-'灰烬
 
 网页界面（推荐）
-蟒蛇 server.py
+ server.py
 
 开放 http://127.0.0.1:8765
 CLI
