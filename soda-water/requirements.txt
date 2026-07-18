@@ -1,0 +1,9 @@
+# Core dependencies
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional: for CLI hotkey support (run as Admin on Windows)
+keyboard>=0.13.5
+
+# Optional: for GUI image capture display (not required for core functionality)
+pillow>=10.0.0

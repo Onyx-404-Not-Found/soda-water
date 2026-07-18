@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Soda Music Ad Clicker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Segoe UI,system-ui,sans-serif;background:#0f0f0f;color:#e0e0e0;max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin-bottom:4px;color:#fff}
+.sub{color:#888;font-size:13px;margin-bottom:16px}
+.card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:10px}
+.card h3{font-size:13px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+.green{color:#4caf50}.red{color:#f44336}.orange{color:#ff9800}.blue{color:#2196f3}.gray{color:#888}
+.btn{padding:10px 18px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:disabled{opacity:.35;cursor:default}
+.btn-start{background:#4caf50;color:#fff}
+.btn-pause{background:#ff9800;color:#fff}
+.btn-stop{background:#f44336;color:#fff}
+.btn-ref{background:#333;color:#ccc;font-size:12px;padding:6px 10px}
+.btn-cap{background:#1565c0;color:#fff;font-size:12px;padding:6px 10px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.status-bar{font-size:14px;font-weight:600;margin:6px 0;padding:4px 0}
+.log-box{background:#0a0a0a;border:1px solid #2a2a2a;border-radius:6px;padding:8px;height:240px;overflow-y:auto;font-family:Consolas,monospace;font-size:12px;line-height:1.5}
+.log-box div{border-bottom:1px solid #111;padding:1px 0}
+.progress{height:4px;background:#333;border-radius:2px;margin:6px 0;overflow:hidden}
+.progress .fill{height:100%;background:#4caf50;width:0;transition:width 1s}
+.pulsing{animation:pulse 1s infinite}
+@keyframes pulse{50%{background:#ff9800}}
+.section{margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Soda Music Ad Clicker</h1>
+<div class="sub">ADB + OpenCV - Auto claim ad rewards</div>
+<div class="card">
+  <h3>Device</h3>
+  <div id="dev-status" class="gray">Checking...</div>
+  <div id="dev-detail" class="gray"></div>
+  <div class="btn-row" style="margin-top:6px">
+    <button class="btn btn-ref" onclick="api('refresh')">Refresh</button>
+    <button class="btn btn-cap" onclick="openCapture()">Capture Template</button>
+    <button class="btn btn-ref" onclick="clearScreenshots()">Clear Shots</button>
+  </div>
+</div>
+<div class="card">
+  <h3>Templates</h3>
+  <div id="tmpl-list"></div>
+</div>
+<div class="btn-row">
+  <button class="btn btn-start" id="btn-start" onclick="api('start')">START</button>
+  <button class="btn btn-pause" id="btn-pause" onclick="api('pause')" disabled>Pause</button>
+  <button class="btn btn-stop" id="btn-stop" onclick="api('stop')" disabled>Stop</button>
+</div>
+<div class="status-bar" id="status-text">Idle</div>
+<div class="row"><span id="stats" class="gray">Cycles: 0 | Success: 0</span></div>
+<div class="progress"><div class="fill" id="pbar"></div></div>
+<div class="card" style="padding:6px 8px">
+  <h3>Log</h3>
+  <div class="log-box" id="log"></div>
+</div>
+<script>
+var interval;
+function api(action,body){
+  fetch('/api/'+action,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body||undefined})
+  .then(r=>r.json()).then(d=>{if(d.error)alert(d.error);updateUI(d);})
+  .catch(()=>{});
+}
+function openCapture(){
+  var names=JSON.parse(document.getElementById('tmpl-data').value||'[]');
+  var n=prompt('Which template?\n'+names.map(function(x,i){return (i+1)+'. '+x;}).join('\n')+'\n0. Cancel');
+  if(!n||n==='0')return;
+  var idx=parseInt(n)-1;
+  if(idx>=0&&idx<names.length) api('capture',JSON.stringify({name:names[idx]}));
+}
+function updateUI(d){
+  if(!d)return;
+  if(d.dev_ok){
+    document.getElementById('dev-status').innerHTML='<span class="green">Connected: '+d.dev_model+'</span>';
+    document.getElementById('dev-detail').textContent='Android '+d.dev_android+' | '+d.dev_screen;
+  }else{
+    document.getElementById('dev-status').innerHTML='<span class="red">No device</span>';
+    document.getElementById('dev-detail').textContent='Check USB debugging';
+  }
+  if(d.templates){
+    var h='';
+    for(var i=0;i<d.templates.length;i++){
+      var t=d.templates[i];
+      h+='<div class="row"><span>'+t.name+'</span><span class="'+(t.ok?'green':'red')+'">'+(t.ok?'OK ('+t.w+'x'+t.h+')':'MISSING')+'</span></div>';
+    }
+    document.getElementById('tmpl-list').innerHTML=h;
+  }
+  document.getElementById('tmpl-data').value=JSON.stringify(d.tmpl_names||[]);
+  document.getElementById('status-text').textContent=d.status||'Idle';
+  document.getElementById('status-text').className='status-bar '+(d.color||'gray');
+  document.getElementById('stats').textContent='Cycles: '+d.cycles+' | Success: '+d.success;
+  var pb=document.getElementById('pbar');
+  pb.style.width=(d.running&&!d.paused?'100%':'0%');
+  pb.className='fill'+(d.running&&!d.paused?' pulsing':'');
+  document.getElementById('btn-start').disabled=d.running;
+  document.getElementById('btn-pause').disabled=!d.running;
+  document.getElementById('btn-pause').textContent=d.paused?'Resume':'Pause';
+  document.getElementById('btn-pause').className='btn '+(d.paused?'btn-start':'btn-pause');
+  document.getElementById('btn-stop').disabled=!d.running;
+}
+function poll(){api('status');}
+function refreshLog(){
+  fetch('/api/log').then(function(r){return r.json();}).then(function(d){
+    var box=document.getElementById('log');
+    if(d.lines){
+      box.innerHTML=d.lines.map(function(l){return '<div>'+l+'</div>';}).join('');
+      box.scrollTop=box.scrollHeight;
+    }
+  });
+}
+function clearScreenshots(){
+  if(confirm('Delete all screenshots?')){
+    api('clear_screenshots');
+    setTimeout(refreshLog,500);
+  }
+}
+interval=setInterval(poll,1500);
+setInterval(refreshLog,2000);
+poll();refreshLog();
+</script>
+<input type="hidden" id="tmpl-data" value="[]">
+</body>
+</html>
